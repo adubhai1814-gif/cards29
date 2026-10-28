@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>২৯ কার্ড গেম (29 Card Game Online)</title>
+    <title>২৯ কার্ড গেম (Complete Multiplayer 29)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -21,7 +20,6 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between select-none">
     
-    <!-- Top Header -->
     <header class="bg-black/40 backdrop-blur-md px-6 py-3 flex justify-between items-center border-b border-green-800">
         <h1 class="text-xl font-bold text-yellow-400 flex items-center gap-2">🎴 ২৯ কার্ড গেম (Live Online)</h1>
         <div id="room-badge" class="hidden bg-green-900/80 px-4 py-1.5 rounded-full text-sm font-semibold border border-green-600 shadow">
@@ -29,7 +27,6 @@
         </div>
     </header>
 
-    <!-- Main Section -->
     <main class="flex-1 flex flex-col items-center justify-center p-4 relative">
         
         <!-- LOBBY SCREEN -->
@@ -60,7 +57,7 @@
         <!-- WAITING ROOM -->
         <div id="waiting-room" class="hidden w-full max-w-lg bg-green-950/90 border border-green-700 p-8 rounded-3xl shadow-2xl text-center backdrop-blur-md">
             <h2 class="text-2xl font-bold text-yellow-400 mb-2">খেলোয়াড়দের জন্য অপেক্ষা করা হচ্ছে...</h2>
-            <p class="text-gray-300 text-sm mb-4">নিচের কোডটি আপনার বন্ধুদের শেয়ার করুন:</p>
+            <p class="text-gray-300 text-sm mb-4">নিচের কোডটি আপনার বন্ধুদের শেয়ার করুন (৪ জন হলে শুরু হবে):</p>
             <div class="bg-black/60 p-4 rounded-2xl border border-yellow-500/50 mb-6 inline-block shadow-inner">
                 <span id="display-room-code" class="text-4xl font-mono font-bold tracking-widest text-yellow-300">------</span>
             </div>
@@ -73,7 +70,6 @@
         <!-- GAME TABLE -->
         <div id="game-table" class="hidden w-full max-w-6xl h-[740px] felt-table rounded-3xl border-4 border-green-900 relative flex flex-col justify-between p-6 overflow-hidden shadow-2xl">
             
-            <!-- Top Player -->
             <div class="flex flex-col items-center">
                 <div class="bg-black/60 px-4 py-1 rounded-full text-xs text-yellow-300 border border-green-700 mb-1">
                     <span id="top-name">পার্টনার</span>
@@ -81,7 +77,6 @@
                 <div id="top-hand" class="flex gap-1 h-16 items-center"></div>
             </div>
 
-            <!-- Middle Field & Bidding/Partner Panel -->
             <div class="flex justify-between items-center px-12">
                 <div class="flex flex-col items-center">
                     <div class="bg-black/60 px-4 py-1 rounded-full text-xs text-yellow-300 border border-green-700 mb-2">
@@ -113,7 +108,6 @@
                 </div>
             </div>
 
-            <!-- Current User Hand -->
             <div class="flex flex-col items-center">
                 <div class="flex gap-2 mb-2" id="my-hand"></div>
                 <div class="text-sm font-semibold text-green-200" id="my-name-label">আপনার হাত</div>
@@ -131,7 +125,8 @@
         const db = firebase.database();
 
         let myName = "", currentRoom = "", isHost = false;
-        let myCards = [];
+        let myCards = [], myPlayerIndex = -1;
+        let currentTurn = 0;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound() {
@@ -155,7 +150,9 @@
 
             db.ref('rooms/' + currentRoom).set({
                 status: 'waiting',
-                players: [{ name: myName, isHost: true }]
+                players: [{ name: myName, isHost: true }],
+                currentTurn: 0,
+                tableCards: []
             });
 
             listenToRoom();
@@ -174,8 +171,11 @@
                 let players = room.players || [];
                 if(players.length >= 4) { alert("রুম ফুল হয়ে গেছে!"); return; }
 
-                players.push({ name: myName, isHost: false });
-                db.ref('rooms/' + currentRoom + '/players').set(players);
+                // Check if already joined
+                if(!players.some(p => p.name === myName)) {
+                    players.push({ name: myName, isHost: false });
+                    db.ref('rooms/' + currentRoom + '/players').set(players);
+                }
                 listenToRoom();
                 showWaitingRoom();
             });
@@ -194,6 +194,9 @@
                 if(!snapshot.exists()) return;
                 let room = snapshot.val();
                 let players = room.players || [];
+                currentTurn = room.currentTurn !== undefined ? room.currentTurn : 0;
+
+                myPlayerIndex = players.findIndex(p => p.name === myName);
 
                 let html = '<div class="text-gray-400 font-semibold mb-2">যুক্ত হওয়া প্লেয়ারসমূহ:</div>';
                 players.forEach(p => {
@@ -208,10 +211,19 @@
                 if(room.status === 'playing') {
                     document.getElementById('waiting-room').classList.add('hidden');
                     document.getElementById('game-table').classList.remove('hidden');
-                    let pIndex = players.findIndex(p => p.name === myName);
-                    if(room.hands && room.hands[pIndex]) {
-                        myCards = room.hands[pIndex];
+                    
+                    if(room.hands && room.hands[myPlayerIndex]) {
+                        myCards = room.hands[myPlayerIndex];
                         renderMyHand();
+                    }
+
+                    renderTableCards(room.tableCards || []);
+
+                    if(currentTurn === myPlayerIndex) {
+                        document.getElementById('game-status').innerText = `আপনার চাল! একটি কার্ড খেলুন।`;
+                    } else {
+                        let activePlayer = players[currentTurn] ? players[currentTurn].name : 'অন্য প্লেয়ার';
+                        document.getElementById('game-status').innerText = `${activePlayer}-এর চাল চলছে... অপেক্ষা করুন।`;
                     }
                 }
             });
@@ -233,20 +245,66 @@
 
             db.ref('rooms/' + currentRoom).update({
                 status: 'playing',
-                hands: hands
+                hands: hands,
+                currentTurn: 0,
+                tableCards: []
             });
         }
 
         function renderMyHand() {
-            playSound();
             const myHandEl = document.getElementById('my-hand');
             myHandEl.innerHTML = '';
-            myCards.forEach(c => {
+            myCards.forEach((c, idx) => {
                 let cardDiv = document.createElement('div');
                 cardDiv.className = `card bg-white w-16 h-24 rounded-lg shadow-2xl flex flex-col justify-between p-2 cursor-pointer border ${c.color} font-bold`;
                 cardDiv.innerHTML = `<span class="text-sm">${c.rank}</span><span class="text-xl self-center">${c.suit}</span><span class="text-sm self-end rotate-180">${c.rank}</span>`;
-                cardDiv.onclick = () => { cardDiv.remove(); document.getElementById('trick-area').appendChild(cardDiv); };
+                
+                cardDiv.onclick = () => {
+                    if (currentTurn !== myPlayerIndex) {
+                        alert("এখন আপনার চাল নয়! অন্য প্লেয়ারের জন্য অপেক্ষা করুন।");
+                        return;
+                    }
+                    playCard(idx, c);
+                };
                 myHandEl.appendChild(cardDiv);
+            });
+        }
+
+        function playCard(cardIndex, card) {
+            playSound();
+            myCards.splice(cardIndex, 1);
+            renderMyHand();
+
+            db.ref('rooms/' + currentRoom).once('value', snapshot => {
+                let room = snapshot.val();
+                let tableCards = room.tableCards || [];
+                tableCards.push({ player: myName, card: card });
+
+                let nextTurn = (currentTurn + 1) % 4;
+
+                // If 4 cards played, reset table after 3 seconds
+                if(tableCards.length === 4) {
+                    setTimeout(() => {
+                        db.ref('rooms/' + currentRoom + '/tableCards').set([]);
+                    }, 3000);
+                }
+
+                db.ref('rooms/' + currentRoom).update({
+                    tableCards: tableCards,
+                    currentTurn: nextTurn
+                });
+            });
+        }
+
+        function renderTableCards(tableCards) {
+            const trickArea = document.getElementById('trick-area');
+            trickArea.innerHTML = '';
+            tableCards.forEach(tc => {
+                let c = tc.card;
+                let d = document.createElement('div');
+                d.className = `card bg-white w-16 h-24 rounded-lg shadow-xl flex flex-col justify-between p-2 border ${c.color} font-bold`;
+                d.innerHTML = `<span class="text-sm">${c.rank}</span><span class="text-xl self-center">${c.suit}</span><span class="text-sm self-end rotate-180">${c.rank}</span>`;
+                trickArea.appendChild(d);
             });
         }
 
@@ -257,7 +315,7 @@
                 <div class="text-xs text-yellow-300 mb-1 font-semibold">কোন কার্ডটি পার্টনারের হাতে থাকবে?</div>
                 <div class="grid grid-cols-4 gap-2 w-full">
                     <button onclick="selectPartner('♠ J', 'ইস্কাপন জেক')" class="bg-black text-white py-1.5 rounded text-xs font-bold">♠ J</button>
-                    <button onclick="selectPartner('♥ J', 'হার্ট জেক')" class="bg-red-600 text-white py-1.5 rounded text-xs font-bold">♥ J</button>
+                    <button onclick="selectPartner('♥ J', 'হার্ট জেک')" class="bg-red-600 text-white py-1.5 rounded text-xs font-bold">♥ J</button>
                     <button onclick="selectPartner('♦ J', 'রুইত জেক')" class="bg-red-600 text-white py-1.5 rounded text-xs font-bold">♦ J</button>
                     <button onclick="selectPartner('♣ J', 'চিড়িয়া জেক')" class="bg-black text-white py-1.5 rounded text-xs font-bold">♣ J</button>
                 </div>
@@ -267,7 +325,7 @@
         function selectPartner(cardCode, cardName) {
             playSound();
             document.getElementById('game-status').innerText = `পার্টনার সিলেক্ট হয়েছে: ${cardName} (${cardCode})!`;
-            document.getElementById('action-panel').innerHTML = `<span class="text-xs text-green-300">আপনার কার্ড থেকে খেলুন...</span>`;
+            document.getElementById('action-panel').innerHTML = `<span class="text-xs text-green-300">আপনার চালের জন্য অপেক্ষা করুন...</span>`;
         }
 
         function passBid() {
