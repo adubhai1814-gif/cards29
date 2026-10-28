@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>২৯ কার্ড গেম (29 Card Game Online)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase Standard Scripts -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #0d2b1d; color: #fff; overflow: hidden; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #0d2b1d; color: #fff; overflow-x: hidden; }
         .felt-table {
             background: radial-gradient(circle, #1a5c38 0%, #0d2b1d 100%);
             box-shadow: inset 0 0 80px rgba(0,0,0,0.8);
@@ -23,7 +23,7 @@
     
     <!-- Top Header -->
     <header class="bg-black/40 backdrop-blur-md px-6 py-3 flex justify-between items-center border-b border-green-800">
-        <h1 class="text-xl font-bold text-yellow-400 flex items-center gap-2">🎴 ২৯ কার্ড গেম (অনলাইন)</h1>
+        <h1 class="text-xl font-bold text-yellow-400 flex items-center gap-2">🎴 ২৯ কার্ড গেম (Live Online)</h1>
         <div id="room-badge" class="hidden bg-green-900/80 px-4 py-1.5 rounded-full text-sm font-semibold border border-green-600 shadow">
             রুম কোড: <span id="current-room-code" class="text-yellow-300 font-mono tracking-widest">------</span>
         </div>
@@ -60,7 +60,7 @@
         <!-- WAITING ROOM -->
         <div id="waiting-room" class="hidden w-full max-w-lg bg-green-950/90 border border-green-700 p-8 rounded-3xl shadow-2xl text-center backdrop-blur-md">
             <h2 class="text-2xl font-bold text-yellow-400 mb-2">খেলোয়াড়দের জন্য অপেক্ষা করা হচ্ছে...</h2>
-            <p class="text-gray-300 text-sm mb-4">নিচের কোডটি আপনার বন্ধুদের শেয়ার দিন:</p>
+            <p class="text-gray-300 text-sm mb-4">নিচের কোডটি আপনার বন্ধুদের শেয়ার করুন:</p>
             <div class="bg-black/60 p-4 rounded-2xl border border-yellow-500/50 mb-6 inline-block shadow-inner">
                 <span id="display-room-code" class="text-4xl font-mono font-bold tracking-widest text-yellow-300">------</span>
             </div>
@@ -124,7 +124,6 @@
     </main>
 
     <script>
-        // Free Open Public Firebase Connection Config
         const firebaseConfig = {
             databaseURL: "https://cards29-game-default-rtdb.firebaseio.com"
         };
@@ -135,7 +134,7 @@
         let myCards = [];
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
+        function playSound() {
             if (audioCtx.state === 'suspended') { audioCtx.resume(); }
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
@@ -196,18 +195,16 @@
                 let room = snapshot.val();
                 let players = room.players || [];
 
-                // Update players list
                 let html = '<div class="text-gray-400 font-semibold mb-2">যুক্ত হওয়া প্লেয়ারসমূহ:</div>';
                 players.forEach(p => {
                     html += `<div class="text-green-300 font-bold py-1">👤 ${p.name} ${p.isHost ? '(হোস্ট)' : ''}</div>`;
                 });
                 document.getElementById('players-list').innerHTML = html;
 
-                if(isHost && players.length === 4) {
+                if(isHost && players.length >= 4) {
                     document.getElementById('start-btn').classList.remove('hidden');
                 }
 
-                // If game started
                 if(room.status === 'playing') {
                     document.getElementById('waiting-room').classList.add('hidden');
                     document.getElementById('game-table').classList.remove('hidden');
@@ -241,7 +238,7 @@
         }
 
         function renderMyHand() {
-            playSound('deal');
+            playSound();
             const myHandEl = document.getElementById('my-hand');
             myHandEl.innerHTML = '';
             myCards.forEach(c => {
@@ -254,10 +251,10 @@
         }
 
         function makeBid(val) {
-            playSound('deal');
-            document.getElementById('game-status').innerText = `বিড করেছেন: ${val} পয়েন্ট। এখন পার্টনার সিলেক্ট করুন:`;
+            playSound();
+            document.getElementById('game-status').innerText = `বিড করেছেন: ${val} পয়েন্ট। পার্টনার সিলেক্ট করুন:`;
             document.getElementById('action-panel').innerHTML = `
-                <div class="text-xs text-yellow-300 mb-1 font-semibold">কোন কার্ডটি আপনার পার্টনারের হাতে থাকবে?</div>
+                <div class="text-xs text-yellow-300 mb-1 font-semibold">কোন কার্ডটি পার্টনারের হাতে থাকবে?</div>
                 <div class="grid grid-cols-4 gap-2 w-full">
                     <button onclick="selectPartner('♠ J', 'ইস্কাপন জেক')" class="bg-black text-white py-1.5 rounded text-xs font-bold">♠ J</button>
                     <button onclick="selectPartner('♥ J', 'হার্ট জেক')" class="bg-red-600 text-white py-1.5 rounded text-xs font-bold">♥ J</button>
@@ -268,13 +265,13 @@
         }
 
         function selectPartner(cardCode, cardName) {
-            playSound('deal');
+            playSound();
             document.getElementById('game-status').innerText = `পার্টনার সিলেক্ট হয়েছে: ${cardName} (${cardCode})!`;
             document.getElementById('action-panel').innerHTML = `<span class="text-xs text-green-300">আপনার কার্ড থেকে খেলুন...</span>`;
         }
 
         function passBid() {
-            playSound('deal');
+            playSound();
             document.getElementById('game-status').innerText = `আপনি পাস করেছেন।`;
             document.getElementById('action-panel').innerHTML = `<span class="text-xs text-gray-400">অন্যদের পালা...</span>`;
         }
