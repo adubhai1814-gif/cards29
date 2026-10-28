@@ -3,57 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>২৯ কার্ড গেম (29 Card Game Online - Realtime)</title>
+    <title>২৯ কার্ড গেম (29 Card Game Online)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #0d2b1d; color: #fff; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #0d2b1d; color: #fff; overflow: hidden; }
         .felt-table {
-            background: radial-gradient(circle, #134e32 0%, #0a291b 100%);
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.7);
+            background: radial-gradient(circle, #1a5c38 0%, #0d2b1d 100%);
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.8);
         }
         .card { transition: all 0.2s ease-in-out; user-select: none; }
-        .card:hover { transform: translateY(-10px); }
+        .card:hover { transform: translateY(-12px); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
-    <!-- Header -->
-    <header class="bg-black/40 backdrop-blur-md p-4 flex justify-between items-center border-b border-green-800">
-        <h1 class="text-2xl font-bold text-yellow-400 flex items-center gap-2">🎴 ২৯ কার্ড গেম (অনলাইন)</h1>
-        <div id="room-badge" class="hidden bg-green-900 px-3 py-1 rounded-full text-sm font-semibold border border-green-600">
-            রুম কোড: <span id="current-room-code" class="text-yellow-300 font-mono">------</span>
+<body class="min-h-screen flex flex-col justify-between select-none">
+    
+    <!-- Top Bar -->
+    <header class="bg-black/40 backdrop-blur-md px-6 py-3 flex justify-between items-center border-b border-green-800">
+        <h1 class="text-xl font-bold text-yellow-400 flex items-center gap-2">🎴 ২৯ কার্ড গেম</h1>
+        <div id="room-badge" class="hidden bg-green-900/80 px-4 py-1.5 rounded-full text-sm font-semibold border border-green-600 shadow">
+            রুম কোড: <span id="current-room-code" class="text-yellow-300 font-mono tracking-widest">------</span>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="flex-1 flex flex-col items-center justify-center p-4">
+    <main class="flex-1 flex flex-col items-center justify-center p-4 relative">
         
         <!-- LOBBY SCREEN -->
-        <div id="lobby-screen" class="w-full max-w-md bg-green-950/80 border border-green-700 p-6 rounded-2xl shadow-2xl backdrop-blur-md">
-            <h2 class="text-2xl font-bold text-center text-yellow-400 mb-6">অনলাইন রুম তৈরি বা জয়েন করুন</h2>
-            
-            <div class="space-y-4">
+        <div id="lobby-screen" class="w-full max-w-md bg-green-950/90 border border-green-700 p-8 rounded-3xl shadow-2xl backdrop-blur-md">
+            <h2 class="text-2xl font-bold text-center text-yellow-400 mb-6">অনলাইন টেবিল রুম</h2>
+            <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-semibold mb-1">আপনার নাম:</label>
-                    <input type="text" id="player-name" placeholder="নাম লিখুন..." class="w-full px-4 py-2 rounded-lg bg-black/50 border border-green-600 focus:outline-none focus:border-yellow-400 text-white">
+                    <label class="block text-sm font-semibold mb-2 text-green-200">আপনার নাম:</label>
+                    <input type="text" id="player-name" placeholder="নাম লিখুন..." class="w-full px-4 py-3 rounded-xl bg-black/50 border border-green-600 focus:outline-none focus:border-yellow-400 text-white font-medium">
                 </div>
-
-                <button onclick="createRoom()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95">
+                <button onclick="createRoom()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl shadow-lg transition transform active:scale-95">
                     নতুন রুম তৈরি করুন (Create Room)
                 </button>
-
                 <div class="relative flex py-2 items-center">
-                    <div class="flex-grow border-t border-green-700"></div>
-                    <span class="flex-shrink mx-4 text-gray-400 text-sm">অথবা</span>
-                    <div class="flex-grow border-t border-green-700"></div>
+                    <div class="flex-grow border-t border-green-800"></div>
+                    <span class="flex-shrink mx-4 text-gray-400 text-sm">অথবা বন্ধুর রুমে জয়েন করুন</span>
+                    <div class="flex-grow border-t border-green-800"></div>
                 </div>
-
                 <div class="flex gap-2">
-                    <input type="text" id="join-room-code" placeholder="রুম কোড দিন..." class="flex-1 px-4 py-2 rounded-lg bg-black/50 border border-green-600 uppercase focus:outline-none focus:border-yellow-400 text-white font-mono">
-                    <button onclick="joinRoom()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2 rounded-lg shadow-lg transition">
+                    <input type="text" id="join-room-code" placeholder="কোড দিন..." class="flex-1 px-4 py-3 rounded-xl bg-black/50 border border-green-600 uppercase focus:outline-none focus:border-yellow-400 text-white font-mono tracking-wider">
+                    <button onclick="joinRoom()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition">
                         জয়েন
                     </button>
                 </div>
@@ -61,170 +55,215 @@
         </div>
 
         <!-- WAITING ROOM -->
-        <div id="waiting-room" class="hidden w-full max-w-lg bg-green-950/90 border border-green-700 p-6 rounded-2xl shadow-2xl text-center">
-            <h2 class="text-2xl font-bold text-yellow-400 mb-2">খেলোয়াড়দের জন্য অপেক্ষা করা হচ্ছে...</h2>
+        <div id="waiting-room" class="hidden w-full max-w-lg bg-green-950/90 border border-green-700 p-8 rounded-3xl shadow-2xl text-center backdrop-blur-md">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-2">খেলোয়াড়দের জন্য অপেক্ষা করা হচ্ছে...</h2>
             <p class="text-gray-300 text-sm mb-6">নিচের কোডটি আপনার বন্ধুদের সাথে শেয়ার করুন:</p>
-            
-            <div class="bg-black/60 p-4 rounded-xl border border-yellow-500/50 mb-6 inline-block">
+            <div class="bg-black/60 p-4 rounded-2xl border border-yellow-500/50 mb-6 inline-block shadow-inner">
                 <span id="display-room-code" class="text-4xl font-mono font-bold tracking-widest text-yellow-300">------</span>
             </div>
-
-            <div id="players-list" class="space-y-2 mb-6 text-left bg-black/40 p-4 rounded-xl border border-green-800">
-                <div class="text-sm text-gray-400">খেলোয়াড়বৃন্দ:</div>
+            <div id="players-list" class="space-y-2 mb-6 text-left bg-black/40 p-4 rounded-xl border border-green-800 text-sm">
+                <div class="text-gray-400">খেলোয়াড়বৃন্দ:</div>
             </div>
-
-            <button onclick="startGame()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg shadow-lg">
-                গেম শুরু করুন (Start Game)
+            <button onclick="startGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg transition">
+                খেলা শুরু করুন (Start Game)
             </button>
         </div>
 
-        <!-- GAME TABLE -->
-        <div id="game-table" class="hidden w-full max-w-5xl h-[700px] felt-table rounded-3xl border-4 border-green-800 relative flex flex-col justify-between p-6 overflow-hidden">
+        <!-- GAME TABLE (World of Card Games style layout) -->
+        <div id="game-table" class="hidden w-full max-w-6xl h-[740px] felt-table rounded-3xl border-4 border-green-900 relative flex flex-col justify-between p-6 overflow-hidden shadow-2xl">
+            
+            <!-- Top Player (Partner) -->
             <div class="flex flex-col items-center">
-                <div class="bg-black/50 px-3 py-1 rounded-full text-xs text-yellow-300 mb-1" id="top-player-label">পার্টনার</div>
-                <div id="top-hand" class="flex gap-1 h-20 items-center"></div>
+                <div class="bg-black/60 px-4 py-1 rounded-full text-xs text-yellow-300 border border-green-700 mb-1 flex items-center gap-2">
+                    <span id="top-name">পার্টনার</span> <span id="top-status" class="text-gray-400">(-)</span>
+                </div>
+                <div id="top-hand" class="flex gap-1 h-16 items-center"></div>
             </div>
 
-            <div class="flex justify-between items-center px-10">
+            <!-- Middle Field -->
+            <div class="flex justify-between items-center px-12">
+                <!-- Left Player -->
                 <div class="flex flex-col items-center">
-                    <div class="bg-black/50 px-3 py-1 rounded-full text-xs text-yellow-300 mb-1" id="left-player-label">বিরোধী ১</div>
+                    <div class="bg-black/60 px-4 py-1 rounded-full text-xs text-yellow-300 border border-green-700 mb-2">
+                        <span id="left-name">বিরোধী ১</span> <span id="left-status" class="text-gray-400">(-)</span>
+                    </div>
+                    <div id="left-hand" class="flex flex-col gap-1"></div>
                 </div>
 
-                <div class="flex flex-col items-center justify-center bg-black/30 p-6 rounded-2xl border border-green-700/50 min-w-[280px]">
-                    <div id="game-status" class="text-yellow-400 font-bold mb-3 text-lg text-center">বিড করুন</div>
-                    <div id="trick-area" class="flex gap-3 h-28 items-center justify-center mb-3 min-w-[200px]"></div>
-                    <div id="action-panel" class="flex gap-2"></div>
+                <!-- Center Trick / Bidding Area -->
+                <div class="flex flex-col items-center justify-center bg-black/40 p-6 rounded-3xl border border-green-700/60 min-w-[340px] shadow-2xl backdrop-blur-sm">
+                    <div id="game-status" class="text-yellow-400 font-bold mb-3 text-lg text-center tracking-wide">বিড করুন</div>
+                    
+                    <!-- Played Trick Cards -->
+                    <div id="trick-area" class="flex gap-3 h-32 items-center justify-center mb-3 min-w-[220px]"></div>
+                    
+                    <!-- Bidding / Action Controls -->
+                    <div id="action-panel" class="w-full flex flex-col items-center gap-2">
+                        <!-- Dynamic Bidding Grid (15 to 28) -->
+                        <div id="bidding-grid" class="grid grid-cols-5 gap-1.5 mb-2">
+                            <button onclick="placeBid(15)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">15</button>
+                            <button onclick="placeBid(16)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">16</button>
+                            <button onclick="placeBid(17)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">17</button>
+                            <button onclick="placeBid(18)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">18</button>
+                            <button onclick="placeBid(19)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">19</button>
+                            <button onclick="placeBid(20)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">20</button>
+                            <button onclick="placeBid(21)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">21</button>
+                            <button onclick="placeBid(22)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">22</button>
+                            <button onclick="placeBid(23)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">23</button>
+                            <button onclick="placeBid(24)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">24</button>
+                            <button onclick="placeBid(25)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">25</button>
+                            <button onclick="placeBid(26)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">26</button>
+                            <button onclick="placeBid(27)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">27</button>
+                            <button onclick="placeBid(28)" class="bg-green-800 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded text-sm">28</button>
+                        </div>
+                        <button onclick="passBid()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl shadow transition">পাস (Pass)</button>
+                    </div>
                 </div>
 
+                <!-- Right Player -->
                 <div class="flex flex-col items-center">
-                    <div class="bg-black/50 px-3 py-1 rounded-full text-xs text-yellow-300 mb-1" id="right-player-label">বিরোধী ২</div>
+                    <div class="bg-black/60 px-4 py-1 rounded-full text-xs text-yellow-300 border border-green-700 mb-2">
+                        <span id="right-name">বিরোধী ২</span> <span id="right-status" class="text-gray-400">(-)</span>
+                    </div>
+                    <div id="right-hand" class="flex flex-col gap-1"></div>
                 </div>
             </div>
 
+            <!-- Current User Hand -->
             <div class="flex flex-col items-center">
                 <div class="flex gap-2 mb-2" id="my-hand"></div>
-                <div class="text-sm font-semibold text-green-200" id="my-player-label">আপনার হাত</div>
+                <div class="text-sm font-semibold text-green-200" id="my-name-label">আপনার হাত (My Cards)</div>
             </div>
+
         </div>
+
     </main>
 
     <script>
-        // TODO: Replace with your own free Firebase project config from firebase.google.com
-        const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForDemoPurposeOnly-ChangeThis",
-            authDomain: "cards29-game.firebaseapp.com",
-            databaseURL: "https://cards29-game-default-rtdb.firebaseio.com",
-            projectId: "cards29-game",
-            storageBucket: "cards29-game.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456:web:abcd"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // Web Audio Synthesizer for Realistic Card Shuffle & Deal Sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            if (type === 'shuffle') {
+                for(let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        let osc = audioCtx.createOscillator();
+                        let gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(120 + Math.random() * 350, audioCtx.currentTime);
+                        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+                        osc.connect(gain); gain.connect(audioCtx.destination);
+                        osc.start(); osc.stop(audioCtx.currentTime + 0.04);
+                    }, i * 35);
+                }
+            } else if (type === 'deal' || type === 'play') {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.09);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.09);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.09);
+            }
+        }
 
         let currentRoom = null;
         let playerName = "";
-        let playerKey = "";
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playCardSound() {
-            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
-        }
 
         function createRoom() {
             playerName = document.getElementById('player-name').value.trim();
-            if(!playerName) { alert("নাম লিখুন!"); return; }
+            if(!playerName) { alert("দয়া করে আপনার নাম লিখুন!"); return; }
             currentRoom = Math.random().toString(36).substring(2, 8).toUpperCase();
-            playerKey = "p1";
+            playSound('shuffle');
 
-            db.ref('rooms/' + currentRoom).set({
-                host: playerName,
-                status: 'waiting',
-                players: { p1: playerName }
-            });
-
-            enterWaitingRoom();
-        }
-
-        function joinRoom() {
-            playerName = document.getElementById('player-name').value.trim();
-            let code = document.getElementById('join-room-code').value.trim().toUpperCase();
-            if(!playerName || !code) { alert("নাম এবং কোড দিন!"); return; }
-            currentRoom = code;
-
-            db.ref('rooms/' + currentRoom).once('value', snapshot => {
-                if(!snapshot.exists()) { alert("রুম পাওয়া যায়নি!"); return; }
-                let roomData = snapshot.val();
-                let players = roomData.players || {};
-                let count = Object.keys(players).length;
-
-                if(count >= 4) { alert("রুমে ইতিমধ্যে ৪ জন হয়ে গেছে!"); return; }
-                playerKey = 'p' + (count + 1);
-
-                db.ref(`rooms/${currentRoom}/players/${playerKey}`).set(playerName);
-                enterWaitingRoom();
-            });
-        }
-
-        function enterWaitingRoom() {
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-room').classList.remove('hidden');
             document.getElementById('room-badge').classList.remove('hidden');
             document.getElementById('display-room-code').innerText = currentRoom;
             document.getElementById('current-room-code').innerText = currentRoom;
+            document.getElementById('players-list').innerHTML += `<div class="text-green-300 font-semibold">👤 ${playerName} (হোস্ট)</div>`;
+        }
 
-            db.ref('rooms/' + currentRoom + '/players').on('value', snapshot => {
-                let players = snapshot.val() || {};
-                let html = '<div class="text-sm text-gray-400 mb-2">খেলোয়াড়বৃন্দ:</div>';
-                Object.values(players).forEach(p => {
-                    html += `<div class="text-green-300 font-semibold">👤 ${p}</div>`;
-                });
-                document.getElementById('players-list').innerHTML = html;
-            });
+        function joinRoom() {
+            playerName = document.getElementById('player-name').value.trim();
+            let code = document.getElementById('join-room-code').value.trim().toUpperCase();
+            if(!playerName || !code) { alert("নাম এবং রুম কোড দিন!"); return; }
+            currentRoom = code;
+            playSound('deal');
 
-            db.ref('rooms/' + currentRoom + '/status').on('value', snapshot => {
-                if(snapshot.val() === 'playing') {
-                    startTableUI();
-                }
-            });
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('waiting-room').classList.remove('hidden');
+            document.getElementById('room-badge').classList.remove('hidden');
+            document.getElementById('display-room-code').innerText = currentRoom;
+            document.getElementById('current-room-code').innerText = currentRoom;
+            document.getElementById('players-list').innerHTML += `
+                <div class="text-green-300 font-semibold">👤 ${playerName} (Joined)</div>
+                <div class="text-green-400">👤 Host / Player 1</div>
+            `;
         }
 
         function startGame() {
-            db.ref('rooms/' + currentRoom + '/status').set('playing');
-        }
-
-        function startTableUI() {
+            playSound('shuffle');
             document.getElementById('waiting-room').classList.add('hidden');
             document.getElementById('game-table').classList.remove('hidden');
-            renderGameTable();
+            renderTableCards();
         }
 
-        function renderGameTable() {
+        function renderTableCards() {
             const myHandEl = document.getElementById('my-hand');
             myHandEl.innerHTML = '';
-            let cards = [
-                {suit: '♥', rank: 'J', color: 'text-red-500'},
-                {suit: '♥', rank: '9', color: 'text-red-500'},
+            
+            // 29 Game sample cards matching worldofcardgames layout
+            let sampleCards = [
                 {suit: '♠', rank: 'A', color: 'text-black'},
-                {suit: '♦', rank: '10', color: 'text-red-500'}
+                {suit: '♣', rank: 'J', color: 'text-black'},
+                {suit: '♦', rank: '8', color: 'text-red-500'},
+                {suit: '♦', rank: '9', color: 'text-red-500'},
+                {suit: '♠', rank: 'A', color: 'text-black'},
+                {suit: '♥', rank: '9', color: 'text-red-500'}
             ];
-            cards.forEach(c => {
-                let d = document.createElement('div');
-                d.className = `card bg-white w-16 h-24 rounded-lg shadow-xl flex flex-col justify-between p-2 cursor-pointer border ${c.color} font-bold`;
-                d.innerHTML = `<span>${c.rank}</span><span class="text-xl self-center">${c.suit}</span><span class="self-end rotate-180">${c.rank}</span>`;
-                d.onclick = () => { playCardSound(); d.remove(); document.getElementById('trick-area').appendChild(d); };
-                myHandEl.appendChild(d);
+
+            sampleCards.forEach(c => {
+                let cardDiv = document.createElement('div');
+                cardDiv.className = `card bg-white w-16 h-24 rounded-lg shadow-2xl flex flex-col justify-between p-2 cursor-pointer border border-gray-300 ${c.color} font-bold`;
+                cardDiv.innerHTML = `<span class="text-sm">${c.rank}</span><span class="text-xl self-center">${c.suit}</span><span class="text-sm self-end rotate-180">${c.rank}</span>`;
+                cardDiv.onclick = () => {
+                    playSound('play');
+                    cardDiv.remove();
+                    document.getElementById('trick-area').appendChild(cardDiv);
+                };
+                myHandEl.appendChild(cardDiv);
             });
-            document.getElementById('action-panel').innerHTML = `<button onclick="alert('বিড সফল!')" class="bg-yellow-500 text-black px-4 py-2 rounded font-bold">১৬ বিড করুন</button>`;
+        }
+
+        function placeBid(val) {
+            playSound('deal');
+            document.getElementById('game-status').innerText = `বিড করা হয়েছে: ${val} পয়েন্ট`;
+            document.getElementById('action-panel').innerHTML = `
+                <div class="text-green-300 font-semibold mb-1">ট্রাম্প নির্বাচন করুন:</div>
+                <div class="flex gap-2">
+                    <button onclick="setTrump('♥ হার্ট')" class="bg-red-600 text-white px-3 py-1.5 rounded font-bold">♥ হার্ট</button>
+                    <button onclick="setTrump('♦ রুইত')" class="bg-red-600 text-white px-3 py-1.5 rounded font-bold">♦ রুইত</button>
+                    <button onclick="setTrump('♠ ইস্কাপন')" class="bg-black text-white px-3 py-1.5 rounded font-bold">♠ ইস্কাপন</button>
+                    <button onclick="setTrump('♣ চিড়িয়া')" class="bg-black text-white px-3 py-1.5 rounded font-bold">♣ চিড়িয়া</button>
+                </div>
+            `;
+        }
+
+        function setTrump(name) {
+            playSound('deal');
+            document.getElementById('game-status').innerText = `ট্রাম্প সেট হয়েছে: ${name} | খেলা চলছে...`;
+            document.getElementById('action-panel').innerHTML = `<span class="text-sm text-green-300">আপনার কার্ড থেকে একটি খেলুন...</span>`;
+        }
+
+        function passBid() {
+            playSound('deal');
+            document.getElementById('game-status').innerText = `আপনি পাস করেছেন।`;
+            document.getElementById('action-panel').innerHTML = `<span class="text-sm text-gray-400">অন্যান্য খেলোয়াড়দের রাউন্ড...</span>`;
         }
     </script>
 </body>
