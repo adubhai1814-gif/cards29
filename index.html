@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>২৯ কার্ড গেম (Complete 29 Game Engine)</title>
+    <title>২৯ কার্ড গেম (29 Card Game Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -107,7 +107,7 @@
             <!-- Current User Hand & Seat 2 (Partner) -->
             <div class="flex flex-col items-center gap-2">
                 <div id="seat-2" class="flex flex-col items-center p-2 rounded-xl bg-black/40 border border-green-800">
-                    <span id="name-2" class="text-xs text-yellow-300 font-bold">পার্টনার (প্লেয়ার ৩)</span>
+                    <span id="name-2" class="text-xs text-yellow-300 font-bold">পার্টনার</span>
                 </div>
                 <div class="flex gap-2 mb-1" id="my-hand"></div>
                 <div class="text-sm font-semibold text-green-200" id="my-name-label">আপনার হাত</div>
@@ -131,18 +131,19 @@
 
         const rankValues = { 'J': 3, '9': 2, 'A': 1, '10': 1, 'K': 0, 'Q': 0, '8': 0, '7': 0 };
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound() {
-            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+            } catch(e) {}
         }
 
         function createRoom() {
@@ -215,7 +216,6 @@
                 currentTurn = room.currentTurn !== undefined ? room.currentTurn : 0;
                 gameState = room.gameState || 'bidding';
 
-                // Waiting room list update
                 let html = '<div class="text-gray-400 font-semibold mb-2">যুক্ত হওয়া প্লেয়ারসমূহ:</div>';
                 playersList.forEach((p, idx) => {
                     html += `<div class="text-green-300 font-bold py-1">👤 ${p.name} (Seat ${idx+1}) ${p.isHost ? '[হোস্ট]' : ''}</div>`;
@@ -235,13 +235,13 @@
                         renderMyHand();
                     }
 
-                    renderTableCards(room.tableCards || []);
                     updatePlayerSeatsAndTurns(playersList, currentTurn);
 
                     document.getElementById('team1-score').innerText = room.team1Score || 0;
                     document.getElementById('team2-score').innerText = room.team2Score || 0;
 
                     if (gameState === 'bidding') {
+                        document.getElementById('trick-area').innerHTML = ''; // Keep clean during bidding
                         document.getElementById('action-panel').style.display = 'flex';
                         if(currentTurn === myPlayerIndex) {
                             document.getElementById('game-status').innerText = `আপনার বিড করার পালা! সর্বোচ্চ বিড: ${room.highestBid || 0}`;
@@ -251,6 +251,7 @@
                         }
                     } else if (gameState === 'playing') {
                         document.getElementById('action-panel').style.display = 'none';
+                        renderTableCards(room.tableCards || []);
                         if(currentTurn === myPlayerIndex) {
                             document.getElementById('game-status').innerText = `আপনার চাল! একটি কার্ড খেলুন।`;
                         } else {
@@ -263,10 +264,6 @@
         }
 
         function updatePlayerSeatsAndTurns(players, turnIdx) {
-            // Assign relative seats: 
-            // Seat 2 (Top) = (myIndex + 2) % 4
-            // Seat 1 (Left) = (myIndex + 1) % 4
-            // Seat 3 (Right) = (myIndex + 3) % 4
             let s1Idx = (myPlayerIndex + 1) % 4;
             let s2Idx = (myPlayerIndex + 2) % 4;
             let s3Idx = (myPlayerIndex + 3) % 4;
@@ -275,7 +272,6 @@
             document.getElementById('name-2').innerText = players[s2Idx] ? players[s2Idx].name : 'পার্টনার';
             document.getElementById('name-3').innerText = players[s3Idx] ? players[s3Idx].name : 'বিরোধী ২';
 
-            // Clear highlights
             ['seat-1', 'seat-2', 'seat-3'].forEach(id => document.getElementById(id).classList.remove('active-turn'));
             document.getElementById('my-name-label').classList.remove('text-yellow-400', 'font-bold');
 
@@ -345,7 +341,7 @@
                 let updates = { currentTurn: nextTurn, passCount: passCount };
                 if (passCount >= 3 && (room.highestBid || 0) > 0) {
                     updates.gameState = 'playing';
-                    updates.currentTurn = 0; // Winner starts
+                    updates.currentTurn = 0;
                 }
 
                 db.ref('rooms/' + currentRoom).update(updates);
@@ -370,7 +366,6 @@
                         return;
                     }
 
-                    // 29 Rule Validation: Must follow leading suit if available in hand
                     db.ref('rooms/' + currentRoom).once('value', snapshot => {
                         let room = snapshot.val();
                         let tableCards = room.tableCards || [];
@@ -397,12 +392,12 @@
             db.ref('rooms/' + currentRoom).once('value', snapshot => {
                 let room = snapshot.val();
                 let tableCards = room.tableCards || [];
-                tableCards.push({ playerIndex: myPlayerIndex, playerName: myName, card: card });
+                let currentName = localStorage.getItem('card29_myname') || 'Player';
+                tableCards.push({ playerIndex: myPlayerIndex, playerName: currentName, card: card });
 
                 let updates = { tableCards: tableCards };
 
                 if (tableCards.length === 4) {
-                    // Evaluate trick winner & points
                     let leadSuit = tableCards[0].card.suit;
                     let winningCard = tableCards[0];
                     let trickPoints = 0;
@@ -417,7 +412,6 @@
                     });
 
                     let winnerIdx = winningCard.playerIndex;
-                    // Teams: Team 1 (Seats 0 & 2), Team 2 (Seats 1 & 3)
                     let isTeam1Winner = (winnerIdx === 0 || winnerIdx === 2);
 
                     let t1Score = room.team1Score || 0;
@@ -445,9 +439,10 @@
             trickArea.innerHTML = '';
             tableCards.forEach(tc => {
                 let c = tc.card;
+                if(!c) return;
                 let d = document.createElement('div');
                 d.className = `card bg-white w-16 h-24 rounded-lg shadow-xl flex flex-col justify-between p-2 border ${c.color} font-bold relative`;
-                d.innerHTML = `<span class="text-sm">${c.rank}</span><span class="text-xl self-center">${c.suit}</span><span class="text-sm self-end rotate-180">${c.rank}</span><span class="absolute bottom-1 right-1 text-[9px] bg-black/70 text-yellow-300 px-1 rounded">${tc.playerName}</span>`;
+                d.innerHTML = `<span class="text-sm">${c.rank}</span><span class="text-xl self-center">${c.suit}</span><span class="text-sm self-end rotate-180">${c.rank}</span><span class="absolute bottom-1 right-1 text-[9px] bg-black/70 text-yellow-300 px-1 rounded">${tc.playerName || ''}</span>`;
                 trickArea.appendChild(d);
             });
         }
