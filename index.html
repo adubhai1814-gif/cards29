@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>২৯ কার্ড গেম (29 Card Game Fixed)</title>
+    <title>২৯ কার্ড গেম (29 Card Game Final Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -241,7 +241,7 @@
                     document.getElementById('team2-score').innerText = room.team2Score || 0;
 
                     if (gameState === 'bidding') {
-                        document.getElementById('trick-area').innerHTML = ''; // Keep clean during bidding
+                        document.getElementById('trick-area').innerHTML = '';
                         document.getElementById('action-panel').style.display = 'flex';
                         if(currentTurn === myPlayerIndex) {
                             document.getElementById('game-status').innerText = `আপনার বিড করার পালা! সর্বোচ্চ বিড: ${room.highestBid || 0}`;
@@ -387,15 +387,20 @@
         function playCard(cardIndex, card) {
             playSound();
             myCards.splice(cardIndex, 1);
-            renderMyHand();
+            renderMyHand(); // Immediately remove from local hand UI
 
             db.ref('rooms/' + currentRoom).once('value', snapshot => {
                 let room = snapshot.val();
                 let tableCards = room.tableCards || [];
                 let currentName = localStorage.getItem('card29_myname') || 'Player';
+                
+                // Also update hands in DB to sync card removal across database state
+                let hands = room.hands;
+                hands[myPlayerIndex] = myCards;
+
                 tableCards.push({ playerIndex: myPlayerIndex, playerName: currentName, card: card });
 
-                let updates = { tableCards: tableCards };
+                let updates = { tableCards: tableCards, hands: hands };
 
                 if (tableCards.length === 4) {
                     let leadSuit = tableCards[0].card.suit;
@@ -425,7 +430,7 @@
 
                     setTimeout(() => {
                         db.ref('rooms/' + currentRoom + '/tableCards').set([]);
-                    }, 3500);
+                    }, 3000);
                 } else {
                     updates.currentTurn = (currentTurn + 1) % 4;
                 }
